@@ -1,0 +1,25 @@
+{
+	"name": "its-mieger/s3backup",
+	"description": "Backup for s3 buckets ",
+	"minimum-stability": "dev",
+	"license": "proprietary",
+	"authors": [
+		{
+			"name": "Christopher Mieger",
+			"email": "christopher.mieger@its-mieger.de"
+		}
+	],
+	"require": {
+		"phpunit/phpunit": "~4.5",
+		"aws/aws-sdk-php": "~2.7",
+		"silex/silex": "~1.1",
+		"knplabs/console-service-provider": "~1.0",
+		"fkooman/ini": "dev-master"
+	},
+	"autoload": {
+		"psr-0": {
+			"": "src/"
+		}
+	}
+
+}
