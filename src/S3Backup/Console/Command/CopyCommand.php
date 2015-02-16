@@ -155,7 +155,7 @@
 
 				$stdIn = fopen('php://stdin', 'r');
 
-				if ($input->hasOption('std')) {
+				if ($input->getOption('std')) {
 					// read keys from std in
 
 
@@ -186,6 +186,7 @@
 						}
 						else {
 							$output->writeln('  <error> Key ' . $key . ' not found in source</error>');
+							++$notFound;
 						}
 						++$i;
 					}
