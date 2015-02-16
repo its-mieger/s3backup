@@ -130,7 +130,12 @@
 					'Bucket' => $this->bucketName,
 					'Key'    => $key
 				));
-				$ret->setBody((string)$objResponse['Body']);
+
+				$context = stream_context_create(array('s3backup.s3body' => array(
+					'body' => $objResponse['Body']
+				)));
+				$ret->setStream(fopen('s3backup.s3body://', 'r', false, $context));
+
 				if (!empty($objResponse['Metadata'])) {
 					$metaData = array();
 

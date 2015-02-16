@@ -2,7 +2,6 @@
 
 	namespace S3Backup\Console\Command;
 
-	use Aws\CloudFront\Exception\Exception;
 	use fkooman\Ini\IniReader;
 	use Knp\Command\Command;
 	use S3Backup\Reader\ArchiveReader;
@@ -34,6 +33,8 @@
 				->addOption('profile', null, InputOption::VALUE_REQUIRED, 'The profile used for credentials')
 				->addOption('source-region', null, InputOption::VALUE_REQUIRED, 'The aws region for the source bucket')
 				->addOption('target-region', null, InputOption::VALUE_REQUIRED, 'The aws region for the target bucket')
+				->addOption('prefix', null, InputOption::VALUE_REQUIRED, 'Prefix to match for files to copy')
+				->addOption('std', 's', InputOption::VALUE_NONE, 'Read keys to copy from stdin instead of copying all keys')
 			;
 		}
 
@@ -105,6 +106,11 @@
 				$targetRegion = $awsRegion;
 
 
+			// get prefix
+			$prefix = $input->getOption('prefix');
+			$prefixLength = (!is_null($prefix) ? strlen($prefix) : 0);
+
+
 			// setup reader
 			if (substr($source, 0, 5) == 's3://') {
 				if (empty($sourceRegion)) {
@@ -133,8 +139,7 @@
 				$targetWriter = new ArchiveWriter($target);
 			}
 
-
-
+			$errors = array();
 			try {
 				$output->writeln('Opening source...');
 				$sourceReader->init();
@@ -148,20 +153,100 @@
 
 				$output->writeln('');
 
-				for ($i = 0; $i < $numObj; ++$i) {
-					$output->writeln('[' . $i . '] ' . $sourceReader->getObjectKey($i));
-					$output->write('Object ' . ($i + 1) . ' of ' . $numObj . ' (' . number_format(($i/$numObj) * 100, 2) . "%)\r");
+				$stdIn = fopen('php://stdin', 'r');
 
-					$targetWriter->writeObject($sourceReader->readObject($i));
+				if ($input->hasOption('std')) {
+					// read keys from std in
 
+
+					$sourceKeys = array();
+					$numObj     = $sourceReader->countObjects();
+					for ($i = 0; $i < $numObj; ++$i) {
+						$sourceKeys[] = $sourceReader->getObjectKey($i);
+					}
+
+					$notFound = 0;
+					$successCount = 0;
+					$i = 0;
+					while ($ln = fgets($stdIn)) {
+						$key = trim($ln);
+						$sr = array_search($key, $sourceKeys);
+						if ($sr !== false) {
+
+							$output->write('[' . $i . '] ' . $key . "\n Object " . ($i + 1) . "\r");
+
+							try {
+								$targetWriter->writeObject($sourceReader->readObject($sr));
+								++$successCount;
+							}
+							catch (\Exception $ex) {
+								$output->writeln('  <error>' . $ex->getMessage() . '</error>');
+								$errors[$sourceReader->getObjectKey($sr)] = $ex;
+							}
+						}
+						else {
+							$output->writeln('  <error> Key ' . $key . ' not found in source</error>');
+						}
+						++$i;
+					}
+
+					$output->writeln('');
+					$output->writeln('');
+					$output->writeln('Successful: ' . ($successCount));
+					$output->writeln('Not found:  ' . $notFound);
+					if (count($errors) > 0)
+						$output->writeln('Errors:     <error>' . count($errors) . '</error>');
+					else
+						$output->writeln('Errors:     ' . count($errors));
+				}
+				else {
+					// copy all keys
+
+					$skippedCount = 0;
+					for ($i = 0; $i < $numObj; ++$i) {
+						$key = $sourceReader->getObjectKey($i);
+
+						if ($prefixLength == 0 || substr($key, 0, $prefixLength) == $prefix) {
+							$output->write('[' . ($i - $skippedCount) . '] ' . $key . "\n Object " . ($i + 1) . ' of ' . $numObj . ' (' . number_format(($i / $numObj) * 100, 2) . "%)\r");
+
+							try {
+								$targetWriter->writeObject($sourceReader->readObject($i));
+							}
+							catch (\Exception $ex) {
+								$output->writeln('  <error>' . $ex->getMessage() . '</error>');
+								$errors[$sourceReader->getObjectKey($i)] = $ex;
+							}
+						}
+						else {
+							++$skippedCount;
+							$output->write("Object " . ($i + 1) . ' of ' . $numObj . ' (' . number_format(($i / $numObj) * 100, 2) . "%) Skipped: " . $skippedCount . "\r");
+						}
+					}
+
+
+					$output->writeln('');
+					$output->writeln('');
+					$output->writeln('Successful: ' . ($numObj - count($errors) - $skippedCount));
+					$output->writeln('Skipped:    ' . $skippedCount);
+					if (count($errors) > 0)
+						$output->writeln('Errors:     <error>' . count($errors) . '</error>');
+					else
+						$output->writeln('Errors:     ' . count($errors));
 
 				}
 
+				if (count($errors) > 0) {
+					$output->writeln('');
+					$output->writeln('Error files:');
+					foreach ($errors as $key => $exception) {
+						$output->writeln($key);
+					}
+				}
 
 				$sourceReader->close();
 				$targetWriter->close();
 			}
-			catch(Exception $ex) {
+			catch(\Exception $ex) {
 				$output->writeln('<error>' . $ex->getMessage() . '</error>');
 				return 1;
 			}

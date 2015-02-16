@@ -5,7 +5,7 @@
 	class S3Object {
 
 		protected $key;
-		protected $body = null;
+		protected $stream = null;
 		protected $contentType = null;
 		protected $metaData = array();
 		protected $acl = array(
@@ -21,20 +21,21 @@
 			$this->key = $key;
 		}
 
+
 		/**
-		 * Gets the object body
-		 * @return string|null The body data
+		 * Gets the body stream handle
+		 * @return resource|null The body stream handle
 		 */
-		public function getBody() {
-			return $this->body;
+		public function getStream() {
+			return $this->stream;
 		}
 
 		/**
-		 * Sets the object body
-		 * @param string|null $body The object body data
+		 * Sets the body stream handle
+		 * @param resource|null $handle The body stream handle
 		 */
-		public function setBody($body) {
-			$this->body = $body;
+		public function setStream($handle) {
+			$this->stream = $handle;
 		}
 
 		/**

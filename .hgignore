@@ -1,2 +1,2 @@
 vendor/*
-Tests/config/config.private.php
+test/config/config.private.php

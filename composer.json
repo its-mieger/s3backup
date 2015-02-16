@@ -19,7 +19,12 @@
 	"autoload": {
 		"psr-0": {
 			"": "src/"
-		}
+		},
+		"files": [
+			"src/S3Backup/S3BodyStream.php",
+			"src/S3Backup/Zip/Stream/Zip64ReadStream.php",
+			"src/S3Backup/Zip/Stream/Zip64WriteStream.php"
+		]
 	}
 
 }

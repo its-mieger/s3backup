@@ -72,8 +72,20 @@
 			$wr = new BucketWriter(TEST_WRITE_BUCKET, TEST_AWS_ACCESS_KEY_ID, TEST_AWS_SECRET_ACCESS_KEY, TEST_AWS_REGION);
 			$wr->init();
 
+			$body1 = fopen('php://memory', 'w+');
+			fwrite($body1, ('das ist ein Test body'));
+			fseek($body1, 0);
+
+			$body2 = fopen('php://memory', 'w+');
+			fwrite($body2, ('das ist ein Test body2'));
+			fseek($body2, 0);
+
+			$body3 = fopen('php://memory', 'w+');
+			fwrite($body3, ('das ist ein Test body3'));
+			fseek($body3, 0);
+
 			$obj1 = new S3Object('tmp/test/Object1.txt');
-			$obj1->setBody('das ist ein Test body');
+			$obj1->setStream($body1);
 			$obj1->setMetaData(array(
 				'key1' => 'key1Value',
 				'key2' => 'key2Value',
@@ -83,12 +95,12 @@
 			$obj1->setGrants($this->testGrants);
 
 			$obj2 = new S3Object('tmp/Object 2.txt');
-			$obj2->setBody('das ist ein Test body2');
+			$obj2->setStream($body2);
 			$obj2->setOwner($this->testOwner);
 			$obj2->setGrants($this->testGrants);
 
 			$obj3 = new S3Object('Object 3.txt');
-			$obj3->setBody('das ist ein Test body3');
+			$obj3->setStream($body3);
 			$obj3->setOwner($this->testOwner);
 			$obj3->setGrants($this->testGrants);
 
@@ -98,6 +110,10 @@
 
 			$wr->close();
 
+
+			fseek($body1, 0);
+			fseek($body2, 0);
+			fseek($body3, 0);
 
 			$cl = S3Client::factory(array(
 				'key'    => TEST_AWS_ACCESS_KEY_ID,
@@ -114,7 +130,8 @@
 				'Bucket' => TEST_WRITE_BUCKET,
 				'Key'    => $obj1->getKey()
 			));
-			$this->assertEquals($obj1->getBody(), (string)$r1Object['Body']);
+			var_dump($obj1->getStream());
+			$this->assertEquals(fread($obj1->getStream(), 1024), (string)$r1Object['Body']);
 			$this->assertEquals($obj1->getMetaData(), $r1Object['Metadata']);
 			$this->assertEquals($obj1->getContentType(), $r1Object['ContentType']);
 			$this->assertEquals($obj1->getOwner(), $r1Acl['Owner']);
@@ -129,7 +146,7 @@
 				'Bucket' => TEST_WRITE_BUCKET,
 				'Key'    => $obj2->getKey()
 			));
-			$this->assertEquals($obj2->getBody(), (string)$r2Object['Body']);
+			$this->assertEquals(fread($obj2->getStream(), 1024), (string)$r2Object['Body']);
 			$this->assertEquals($obj2->getOwner(), $r2Acl['Owner']);
 			$this->assertEquals($obj2->getGrants(), $r2Acl['Grants']);
 
@@ -142,7 +159,7 @@
 				'Bucket' => TEST_WRITE_BUCKET,
 				'Key'    => $obj3->getKey()
 			));
-			$this->assertEquals($obj3->getBody(), (string)$r3Object['Body']);
+			$this->assertEquals(fread($obj3->getStream(), 1024), (string)$r3Object['Body']);
 			$this->assertEquals($obj3->getOwner(), $r3Acl['Owner']);
 			$this->assertEquals($obj3->getGrants(), $r3Acl['Grants']);
 		}

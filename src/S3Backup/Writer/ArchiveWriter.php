@@ -7,7 +7,7 @@
 	use S3Backup\Exception\NotInitException;
 	use S3Backup\Exception\ObjectWriteException;
 	use S3Backup\S3Object;
-	use ZipArchive;
+	use S3Backup\Zip\Zip64Writer;
 
 	class ArchiveWriter extends AbstractWriter {
 
@@ -16,9 +16,14 @@
 
 		protected $file;
 		/**
-		 * @var ZipArchive
+		 * @var Zip64Writer
 		 */
-		protected $archive;
+		protected $zipWriter;
+
+		/**
+		 * @var resource
+		 */
+		protected $zipStream;
 
 		/**
 		 * Creates a new instance
@@ -34,13 +39,14 @@
 		 * @throws ArchiveCreateException
 		 */
 		public function init() {
-			$this->archive = new ZipArchive();
-			$ret = $this->archive->open($this->file, ZipArchive::OVERWRITE);
+			$this->zipStream = fopen($this->file, 'w+');
 
-			if ($ret !== true) {
-				$this->archive = null;
-				throw new ArchiveCreateException($this->file, $ret);
+			if ($this->zipStream === false) {
+				$this->zipWriter = null;
+				throw new ArchiveCreateException($this->file);
 			}
+
+			$this->zipWriter = new Zip64Writer($this->zipStream);
 		}
 
 		/**
@@ -50,13 +56,28 @@
 		 * @throws ObjectWriteException
 		 */
 		public function writeObject(S3Object $object) {
-			if (empty($this->archive))
+			if (empty($this->zipWriter))
 				throw new NotInitException();
 
-			if ($this->archive->addFromString(self::DATA_DIR . '/' .$object->getKey(), $object->getBody()) !== true)
-				throw new ObjectWriteException($object->getKey());
-			if ($this->archive->addFromString(self::META_DIR . '/' .$object->getKey() . '.ser', serialize($object->packAdditionalData())) !== true)
-				throw new ObjectWriteException($object->getKey());
+			try {
+
+				// write body
+				$bodyStream = $object->getStream();
+				fseek($bodyStream, 0);
+				$writeStream = $this->zipWriter->beginFile(self::DATA_DIR . '/' . $object->getKey());
+				while ($r = fread($bodyStream, 1024 * 1024)) {
+					fwrite($writeStream, $r);
+				}
+				fclose($writeStream);
+
+				// write additional data
+				$writeStream = $this->zipWriter->beginFile(self::META_DIR . '/' . $object->getKey() . '.ser');
+				fwrite($writeStream, serialize($object->packAdditionalData()));
+				fclose($writeStream);
+			}
+			catch (\Exception $ex) {
+				throw new ObjectWriteException($object->getKey(), '', 0, $ex);
+			}
 		}
 
 		/**
@@ -65,11 +86,17 @@
 		 * @throws NotInitException
 		 */
 		public function close() {
-			if (empty($this->archive))
+			if (empty($this->zipWriter))
 				throw new NotInitException();
 
-			if ($this->archive->close() !== true)
+			try {
+				$this->zipWriter->flushIndex();
+			}
+			catch(\Exception $ex) {
 				throw new ArchiveCloseException($this->file);
+			}
+
+			fclose($this->zipStream);
 		}
 
 	}

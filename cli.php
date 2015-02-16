@@ -1,6 +1,8 @@
 <?php
 
 	use S3Backup\Console\Command\CopyCommand;
+	use S3Backup\Console\Command\DiffCommand;
+	use S3Backup\Console\Command\ListCommand;
 
 	set_time_limit(0);
 
@@ -12,6 +14,8 @@
 
 
 	$application->add(new CopyCommand());
+	$application->add(new ListCommand());
+	$application->add(new DiffCommand());
 
 
 	$application->run();

@@ -2,14 +2,13 @@
 
 	namespace S3Backup\Reader;
 
-	use S3Backup\Exception\ArchiveCloseException;
 	use S3Backup\Exception\ArchiveOpenException;
 	use S3Backup\Exception\IndexOutOfRangeException;
 	use S3Backup\Exception\NotInitException;
 	use S3Backup\Exception\ObjectReadException;
 	use S3Backup\S3Object;
 	use S3Backup\Writer\ArchiveWriter;
-	use ZipArchive;
+	use S3Backup\Zip\Zip64Reader;
 
 	class ArchiveReader extends AbstractReader {
 
@@ -18,9 +17,14 @@
 
 		protected $file;
 		/**
-		 * @var ZipArchive
+		 * @var Zip64Reader
 		 */
-		protected $archive;
+		protected $zipReader;
+
+		/**
+		 * @var resource
+		 */
+		protected $zipStream;
 
 		protected $objectKeys = array();
 
@@ -45,19 +49,25 @@
 		 * Initializes the reader. Has to be called before first use of the reader.
 		 */
 		public function init() {
-			$this->archive = new ZipArchive();
+			$this->zipStream = fopen($this->file, 'r');
+			$this->zipReader = new Zip64Reader($this->zipStream);
 
-			$ret = $this->archive->open($this->file);
-			if ($ret !== true) {
-				$this->archive = null;
-				throw new ArchiveOpenException($this->file, $ret);
+			// read index
+			try {
+				$this->zipReader->readIndex();
+			}
+			catch(\Exception $ex) {
+				$this->zipReader = null;
+				throw new ArchiveOpenException($this->file, '', 0, $ex);
 			}
 
+
+			// get object keys
 			$this->objectKeys = array();
-			for ($i = 0; $i < $this->archive->numFiles; ++$i) {
-				$fn = $this->archive->getNameIndex($i);
-				if (substr($fn, 0, strlen(ArchiveWriter::DATA_DIR . '/')) == ArchiveWriter::DATA_DIR . '/')
-					$this->objectKeys[] = substr($fn, strlen(ArchiveWriter::DATA_DIR . '/'));
+			$files = $this->zipReader->getFiles();
+			foreach($files as $curr) {
+				if (substr($curr, 0, strlen(ArchiveWriter::DATA_DIR . '/')) == ArchiveWriter::DATA_DIR . '/')
+					$this->objectKeys[] = substr($curr, strlen(ArchiveWriter::DATA_DIR . '/'));
 			}
 		}
 
@@ -69,7 +79,7 @@
 		 * @return string The object key
 		 */
 		public function getObjectKey($index) {
-			if (empty($this->archive))
+			if (empty($this->zipReader))
 				throw new NotInitException();
 			if (!isset($this->objectKeys[$index]))
 				throw new IndexOutOfRangeException($index);
@@ -87,7 +97,7 @@
 		 * @return S3Object The read object
 		 */
 		public function readObject($index) {
-			if (empty($this->archive))
+			if (empty($this->zipReader))
 				throw new NotInitException();
 			if (!isset($this->objectKeys[$index]))
 				throw new IndexOutOfRangeException($index);
@@ -100,14 +110,20 @@
 			$fnData = ArchiveWriter::META_DIR . '/' . $key . '.ser';
 
 			// read body
-			$bd = $this->archive->getFromName($fnBody);
-			if ($bd !== false)
-				$ret->setBody($bd);
-			else
-				throw new ObjectReadException($key);
+			try {
+				$ret->setStream($this->zipReader->getFileStream($fnBody));
+			}
+			catch(\Exception $ex) {
+				throw new ObjectReadException($key, '', 0, $ex);
+			}
 
 			// read additional data
-			$dat = $this->archive->getFromName($fnData);
+			$additionalDataStream = $this->zipReader->getFileStream($fnData);
+			$dat = '';
+			while (($r = fread($additionalDataStream, 1024))) {
+				$dat .= $r;
+			}
+
 			if ($dat !== false && ($dat = unserialize($dat)) !== false)
 				$ret->unpackAdditionalData($dat);
 			else
@@ -125,7 +141,7 @@
 		 */
 		public function countObjects() {
 
-			if (empty($this->archive))
+			if (empty($this->zipReader))
 				throw new NotInitException();
 
 			return count($this->objectKeys);
@@ -133,14 +149,12 @@
 
 		/**
 		 * Closes the archive
-		 * @throws ArchiveCloseException
 		 */
 		public function close() {
-			if (empty($this->archive))
+			if (empty($this->zipReader))
 				throw new NotInitException();
 
-			if ($this->archive->close() !== true)
-				throw new ArchiveCloseException($this->file);
+			fclose($this->zipStream);
 		}
 
 	}

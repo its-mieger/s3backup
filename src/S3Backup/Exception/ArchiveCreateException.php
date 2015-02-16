@@ -5,11 +5,9 @@
 	class ArchiveCreateException extends \Exception {
 
 		protected $filename;
-		protected $errorCode;
 
-		public function __construct($filename, $errorCode, $message = '', $code = 0, \Exception $previous = null) {
+		public function __construct($filename, $message = '', $code = 0, \Exception $previous = null) {
 			$this->filename = $filename;
-			$this->errorCode = $errorCode;
 
 			if (empty($message))
 				$message = 'Could not create archive ' . $filename . '';
@@ -25,13 +23,6 @@
 			return $this->filename;
 		}
 
-		/**
-		 * Gets the error code
-		 * @return int The error code
-		 */
-		public function getErrorCode() {
-			return $this->errorCode;
-		}
 
 
 	}

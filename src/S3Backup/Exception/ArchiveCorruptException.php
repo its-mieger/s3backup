@@ -2,7 +2,7 @@
 
 	namespace S3Backup\Exception;
 
-	class ArchiveOpenException extends \Exception
+	class ArchiveCorruptException extends \Exception
 	{
 
 		protected $filename;
@@ -11,7 +11,7 @@
 			$this->filename  = $filename;
 
 			if (empty($message))
-				$message = 'Could not open archive ' . $filename . '';
+				$message = 'Archive ' . $filename . ' is corrupt';
 
 			parent::__construct($message, $code, $previous);
 		}
@@ -23,4 +23,5 @@
 		public function getFilename() {
 			return $this->filename;
 		}
+
 	}

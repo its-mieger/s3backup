@@ -5,7 +5,6 @@
 	use Aws\CloudFront\Exception\Exception;
 	use Aws\S3\Exception\NoSuchBucketException;
 	use Aws\S3\S3Client;
-	use Guzzle\Http\EntityBody;
 	use S3Backup\Exception\BucketCreateException;
 	use S3Backup\Exception\NotInitException;
 	use S3Backup\Exception\ObjectWriteException;
@@ -83,10 +82,14 @@
 			if (!$this->isInit)
 				throw new NotInitException();
 
+			$context = stream_context_create(array('s3backup.writer.copyreadstream' => array(
+				'baseStream' => $object->getStream()
+			)));
+
 			$params = array(
 				'Bucket'      => $this->bucketName,
 				'Key'         => $object->getKey(),
-				'Body' => EntityBody::factory($object->getBody()),
+				'Body' => fopen('s3backup.writer.copyreadstream://', 'r', false, $context),
 			    'Metadata' => $object->getMetaData(),
 			);
 			$ct = $object->getContentType();
@@ -125,3 +128,57 @@
 		public function close() { }
 
 	}
+
+	class CopyReadStream {
+
+		/**
+		 * The stream context
+		 * @var Resource
+		 */
+		public $context;
+
+		/**
+		 * @var resource
+		 */
+		protected $baseStream;
+
+		public function stream_open() {
+
+			$opt  = stream_context_get_options($this->context);
+			$tOpt = (!empty($opt["s3backup.writer.copyreadstream"]) ? $opt["s3backup.writer.copyreadstream"] : array());
+
+			if (empty($tOpt['baseStream']))
+				return false;
+
+			$this->baseStream = $tOpt['baseStream'];
+
+			return true;
+		}
+
+		public function stream_seek($offset, $whence = SEEK_SET) {
+			return (fseek($this->baseStream, $offset, $whence) == 0);
+		}
+
+		public function stream_read($count) {
+			return fread($this->baseStream, $count);
+		}
+
+		public function stream_tell() {
+			return ftell($this->baseStream);
+		}
+
+		public function stream_eof() {
+			return feof($this->baseStream);
+		}
+
+		public function stream_stat() {
+			return fstat($this->baseStream);
+		}
+
+		public function stream_close() {
+			return true; // the base stream should not be closed!
+		}
+	}
+
+	// register handler
+	stream_wrapper_register("s3backup.writer.copyreadstream", "\\S3Backup\\Writer\\CopyReadStream");

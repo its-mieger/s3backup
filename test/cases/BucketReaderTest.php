@@ -131,7 +131,7 @@
 			// owner
 			$this->assertNotEmpty($modObj->getOwner());
 			// body
-			$this->assertEquals(':0', $modObj->getBody());
+			$this->assertEquals(':0', fread($modObj->getStream(), 1024));
 			// grants
 			$this->assertEquals($modObj->getOwner()['ID'], $modObj->getGrants()[0]['Grantee']['ID']);
 			$this->assertEquals('http://acs.amazonaws.com/groups/global/AllUsers', $modObj->getGrants()[1]['Grantee']['URI']);
