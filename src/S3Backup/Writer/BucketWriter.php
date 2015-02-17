@@ -92,9 +92,20 @@
 				'Body' => fopen('s3backup.writer.copyreadstream://', 'r', false, $context),
 			    'Metadata' => $object->getMetaData(),
 			);
-			$ct = $object->getContentType();
-			if (!empty($ct))
-				$params['ContentType'] = $ct;
+			if ($object->getContentType() !== null)
+				$params['ContentType'] = $object->getContentType();
+			if ($object->getCacheControl() !== null)
+				$params['CacheControl'] = $object->getCacheControl();
+			if ($object->getContentDisposition() !== null)
+				$params['ContentDisposition'] = $object->getContentDisposition();
+			if ($object->getContentEncoding() !== null)
+				$params['ContentEncoding'] = $object->getContentEncoding();
+			if ($object->getContentLanguage() !== null)
+				$params['ContentLanguage'] = $object->getContentLanguage();
+			if ($object->getExpires() !== null)
+				$params['Expires'] = $object->getExpires();
+			if ($object->getWebsiteRedirectLocation() !== null)
+				$params['WebsiteRedirectLocation'] = $object->getWebsiteRedirectLocation();
 
 			try {
 				$this->s3Client->putObject($params);

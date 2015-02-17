@@ -93,6 +93,12 @@
 			$obj1->setContentType('text/text');
 			$obj1->setOwner($this->testOwner);
 			$obj1->setGrants($this->testGrants);
+			$obj1->setContentEncoding('plain');
+			$obj1->setContentDisposition('disposition');
+			$obj1->setContentLanguage('en-de');
+			$obj1->setCacheControl('max-age=86300');
+			$obj1->setExpires(date('c'));
+			$obj1->setWebsiteRedirectLocation('http://test.de');
 
 			$obj2 = new S3Object('tmp/Object 2.txt');
 			$obj2->setStream($body2);
@@ -130,12 +136,18 @@
 				'Bucket' => TEST_WRITE_BUCKET,
 				'Key'    => $obj1->getKey()
 			));
-			var_dump($obj1->getStream());
+
 			$this->assertEquals(fread($obj1->getStream(), 1024), (string)$r1Object['Body']);
 			$this->assertEquals($obj1->getMetaData(), $r1Object['Metadata']);
 			$this->assertEquals($obj1->getContentType(), $r1Object['ContentType']);
 			$this->assertEquals($obj1->getOwner(), $r1Acl['Owner']);
 			$this->assertEquals($obj1->getGrants(), $r1Acl['Grants']);
+			$this->assertEquals($obj1->getContentEncoding(), $r1Object['ContentEncoding']);
+			$this->assertEquals($obj1->getCacheControl(), $r1Object['CacheControl']);
+			$this->assertEquals($obj1->getContentLanguage(), $r1Object['ContentLanguage']);
+			$this->assertEquals($obj1->getContentDisposition(), $r1Object['ContentDisposition']);
+			$this->assertEquals($obj1->getWebsiteRedirectLocation(), $r1Object['WebsiteRedirectLocation']);
+			$this->assertNotEmpty($r1Object['Expires']);
 
 			// check second object
 			$r2Object = $cl->getObject(array(

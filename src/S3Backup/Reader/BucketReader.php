@@ -147,6 +147,18 @@
 				}
 				if (!empty($objResponse['ContentType']))
 					$ret->setContentType($objResponse['ContentType']);
+				if (!empty($objResponse['CacheControl']))
+					$ret->setCacheControl($objResponse['CacheControl']);
+				if (!empty($objResponse['ContentDisposition']))
+					$ret->setContentDisposition($objResponse['ContentDisposition']);
+				if (!empty($objResponse['ContentEncoding']))
+					$ret->setContentEncoding($objResponse['ContentEncoding']);
+				if (!empty($objResponse['ContentLanguage']))
+					$ret->setContentLanguage($objResponse['ContentLanguage']);
+				if (!empty($objResponse['Expires']))
+					$ret->setExpires($objResponse['Expires']);
+				if (!empty($objResponse['WebsiteRedirectLocation']))
+					$ret->setWebsiteRedirectLocation($objResponse['WebsiteRedirectLocation']);
 
 
 				// read acl

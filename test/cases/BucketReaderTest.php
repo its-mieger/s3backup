@@ -72,7 +72,13 @@
 						    'key1' => 'key1value',
 					        'key2' => 'key2value'
 					    ),
-					    'ContentType' => 'text/text'
+					    'ContentType' => 'text/text',
+					    'CacheControl' => 'max-age=86300',
+					    'ContentDisposition' => 'disposition',
+					    'ContentEncoding' => 'plain',
+					    'ContentLanguage' => 'de-de',
+					    'Expires' => date('c'),
+					    'WebsiteRedirectLocation' => 'http://test.de',
 					));
 				}
 			}
@@ -136,6 +142,14 @@
 			$this->assertEquals($modObj->getOwner()['ID'], $modObj->getGrants()[0]['Grantee']['ID']);
 			$this->assertEquals('http://acs.amazonaws.com/groups/global/AllUsers', $modObj->getGrants()[1]['Grantee']['URI']);
 			$this->assertEquals('READ', $modObj->getGrants()[1]['Permission']);
+			// attributes
+			$this->assertEquals('text/text', $modObj->getContentType());
+			$this->assertEquals('max-age=86300', $modObj->getCacheControl());
+			$this->assertEquals('disposition', $modObj->getContentDisposition());
+			$this->assertEquals('plain', $modObj->getContentEncoding());
+			$this->assertEquals('de-de', $modObj->getContentLanguage());
+			$this->assertNotEmpty($modObj->getExpires());
+			$this->assertEquals('http://test.de', $modObj->getWebsiteRedirectLocation());
 
 		}
 
