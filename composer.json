@@ -10,6 +10,7 @@
 		}
 	],
 	"require": {
+		"ext-gmp": "*",
 		"phpunit/phpunit": "~4.5",
 		"aws/aws-sdk-php": "~2.7",
 		"silex/silex": "~1.1",

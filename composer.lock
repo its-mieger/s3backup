@@ -4,7 +4,7 @@
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "f1531383df12dadea5ff079db375de91",
+    "hash": "2bb0d7733c54cf6cb90ccc6b37ba26ce",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
@@ -12,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aws/aws-sdk-php.git",
-                "reference": "470ca90e2d511f64f082c569864f22f2c18fdc38"
+                "reference": "37304bce88eb88427b79a77de5d1f93c14b53a6d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/470ca90e2d511f64f082c569864f22f2c18fdc38",
-                "reference": "470ca90e2d511f64f082c569864f22f2c18fdc38",
+                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/37304bce88eb88427b79a77de5d1f93c14b53a6d",
+                "reference": "37304bce88eb88427b79a77de5d1f93c14b53a6d",
                 "shasum": ""
             },
             "require": {
@@ -71,7 +71,7 @@
                 "s3",
                 "sdk"
             ],
-            "time": "2015-02-12 20:56:39"
+            "time": "2015-02-18 00:20:30"
         },
         {
             "name": "doctrine/instantiator",
@@ -1752,6 +1752,8 @@
     },
     "prefer-stable": false,
     "prefer-lowest": false,
-    "platform": [],
+    "platform": {
+        "ext-gmp": "*"
+    },
     "platform-dev": []
 }
