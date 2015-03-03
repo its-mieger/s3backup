@@ -1,5 +1,6 @@
 {
 	"name": "its-mieger/s3backup",
+	"version": "1.0.0",
 	"description": "Backup for s3 buckets ",
 	"minimum-stability": "dev",
 	"license": "proprietary",
@@ -11,11 +12,13 @@
 	],
 	"require": {
 		"ext-gmp": "*",
-		"phpunit/phpunit": "~4.5",
 		"aws/aws-sdk-php": "~2.7",
 		"silex/silex": "~1.1",
 		"knplabs/console-service-provider": "~1.0",
 		"fkooman/ini": "dev-master"
+	},
+	"require-dev": {
+		"phpunit/phpunit": "~4.5"
 	},
 	"autoload": {
 		"psr-0": {
