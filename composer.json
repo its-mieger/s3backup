@@ -11,7 +11,7 @@
 	],
 	"require": {
 		"ext-gmp": "*",
-		"aws/aws-sdk-php": "~2.7",
+		"aws/aws-sdk-php": "~3.14",
 		"silex/silex": "~1.1",
 		"knplabs/console-service-provider": "~1.0",
 		"fkooman/ini": "~0.2"

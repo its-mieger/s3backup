@@ -13,11 +13,14 @@
 		protected function setUp() {
 			parent::setUp();
 
-			$cl = S3Client::factory(array(
-				'key'    => TEST_AWS_ACCESS_KEY_ID,
-				'secret' => TEST_AWS_SECRET_ACCESS_KEY,
-				'region' => TEST_AWS_REGION,
-			));
+			$cl = new S3Client([
+				'version'     => '2006-03-01',
+				'region'      => TEST_AWS_REGION,
+				'credentials' => [
+					'key'    => TEST_AWS_ACCESS_KEY_ID,
+					'secret' => TEST_AWS_SECRET_ACCESS_KEY,
+				]
+			]);
 
 			try {
 				// test if bucket exists
@@ -116,11 +119,14 @@
 
 			$key = $obj->getKey();
 
-			$cl = S3Client::factory(array(
-				'key'    => TEST_AWS_ACCESS_KEY_ID,
-				'secret' => TEST_AWS_SECRET_ACCESS_KEY,
-				'region' => TEST_AWS_REGION,
-			));
+			$cl = new S3Client([
+				'version'     => '2006-03-01',
+				'region'      => TEST_AWS_REGION,
+				'credentials' => [
+					'key'    => TEST_AWS_ACCESS_KEY_ID,
+					'secret' => TEST_AWS_SECRET_ACCESS_KEY,
+				]
+			]);
 			$cl->putObjectAcl(array(
 				'Bucket' => TEST_READ_BUCKET,
 			    'Key' => $key,

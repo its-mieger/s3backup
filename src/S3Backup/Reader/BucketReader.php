@@ -31,11 +31,14 @@
 		public function __construct($bucketName, $awsAccessKey, $awsSecretKey, $awsRegion) {
 			$this->bucketName = $bucketName;
 
-			$this->s3Client = S3Client::factory(array(
-				'key'    => $awsAccessKey,
-				'secret' => $awsSecretKey,
-				'region' => $awsRegion,
-			));
+			$this->s3Client = new S3Client([
+				'version'     => '2006-03-01',
+				'region'      => $awsRegion,
+				'credentials' => [
+					'key'    => $awsAccessKey,
+					'secret' => $awsSecretKey,
+				]
+			]);
 		}
 
 
