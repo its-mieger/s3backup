@@ -2,8 +2,7 @@
 
 	namespace S3Backup\Writer;
 
-	use Aws\CloudFront\Exception\Exception;
-	use Aws\S3\Exception\NoSuchBucketException;
+	use Aws\S3\Exception\S3Exception;
 	use Aws\S3\S3Client;
 	use S3Backup\Exception\BucketCreateException;
 	use S3Backup\Exception\NotInitException;
@@ -61,11 +60,16 @@
 					// test if bucket exists
 					$this->s3Client->headBucket(array('Bucket' => $this->bucketName));
 				}
-				catch (NoSuchBucketException $ex) {
-					$this->s3Client->createBucket(array(
-						'Bucket'             => $this->bucketName,
-						'LocationConstraint' => $this->s3Client->getRegion()
-					));
+				catch (S3Exception $ex) {
+					if ($ex->getAwsErrorCode() == 'NoSuchBucket') {
+						$this->s3Client->createBucket(array(
+							'Bucket'             => $this->bucketName,
+							'LocationConstraint' => $this->s3Client->getRegion()
+						));
+					}
+					else {
+						throw $ex;
+					}
 				}
 			}
 			catch(\Exception $ex) {
@@ -127,11 +131,13 @@
 				$this->s3Client->putObjectAcl(array(
 					'Bucket' => $this->bucketName,
 					'Key'    => $object->getKey(),
-					'Owner'  => $object->getOwner(),
-					'Grants' => $grants
+					'AccessControlPolicy' => [
+						'Owner'  => $object->getOwner(),
+						'Grants' => $grants
+				    ]
 				));
 			}
-			catch(Exception $ex) {
+			catch(\Exception $ex) {
 				throw new ObjectWriteException($object->getKey(), '', 0, $ex);
 			}
 		}

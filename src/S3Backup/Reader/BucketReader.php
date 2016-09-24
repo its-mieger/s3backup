@@ -2,7 +2,6 @@
 
 	namespace S3Backup\Reader;
 
-	use Aws\CloudFront\Exception\Exception;
 	use Aws\S3\S3Client;
 	use S3Backup\Exception\IndexOutOfRangeException;
 	use S3Backup\Exception\NotInitException;
@@ -131,7 +130,8 @@
 				// get object
 				$objResponse = $this->s3Client->getObject(array(
 					'Bucket' => $this->bucketName,
-					'Key'    => $key
+					'Key'    => $key,
+					'@http' => ['decode_content' => false], // prevent guzzle from decoding object, since we want to receive the original data
 				));
 
 				$context = stream_context_create(array('s3backup.s3body' => array(
@@ -172,7 +172,7 @@
 				$ret->setOwner($aclResponse['Owner']);
 				$ret->setGrants($aclResponse['Grants']);
 			}
-			catch(Exception $ex) {
+			catch(\Exception $ex) {
 				throw new ObjectReadException($key, '', 0, $ex);
 			}
 

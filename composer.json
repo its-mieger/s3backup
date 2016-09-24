@@ -17,7 +17,7 @@
 		"fkooman/ini": "~0.2"
 	},
 	"require-dev": {
-		"phpunit/phpunit": "~4.5"
+		"phpunit/phpunit": "~4.4"
 	},
 	"autoload": {
 		"psr-0": {

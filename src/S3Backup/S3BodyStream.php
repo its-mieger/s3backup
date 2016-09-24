@@ -1,8 +1,7 @@
 <?php
 
 	namespace S3Backup;
-
-	use Guzzle\Http\EntityBody;
+	use Psr\Http\Message\StreamInterface;
 
 	class S3BodyStream
 	{
@@ -14,7 +13,7 @@
 		public $context;
 
 		/**
-		 * @var EntityBody
+		 * @var StreamInterface
 		 */
 		protected $body;
 
@@ -28,7 +27,9 @@
 
 			$this->body = $tOpt['body'];
 
-			return $this->body->rewind();
+			$this->body->rewind();
+
+			return true;
 		}
 
 		public function stream_read($count) {
@@ -36,15 +37,17 @@
 		}
 
 		public function stream_seek($offset, $whence = SEEK_SET) {
-			return $this->body->seek($offset, $whence);
+			$this->body->seek($offset, $whence);
+
+			return true;
 		}
 
 		public function stream_tell() {
-			return $this->body->ftell();
+			return $this->body->tell();
 		}
 
 		public function stream_eof() {
-			return $this->body->feof();
+			return $this->body->eof();
 		}
 
 		public function stream_stat() {

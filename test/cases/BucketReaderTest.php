@@ -1,8 +1,7 @@
 <?php
 
-	use Aws\S3\Exception\NoSuchBucketException;
+	use Aws\S3\Exception\S3Exception;
 	use Aws\S3\S3Client;
-	use Guzzle\Http\EntityBody;
 
 	include_once(__DIR__ . '/../TestCase.php');
 
@@ -26,11 +25,16 @@
 				// test if bucket exists
 				$cl->headBucket(array('Bucket' => TEST_READ_BUCKET));
 			}
-			catch(NoSuchBucketException $ex) {
-				$cl->createBucket(array(
-					'Bucket' => TEST_READ_BUCKET,
-				    'LocationConstraint' => TEST_AWS_REGION
-				));
+			catch(S3Exception $ex) {
+				if ($ex->getAwsErrorCode() == 'NoSuchBucket') {
+					$cl->createBucket(array(
+						'Bucket'             => TEST_READ_BUCKET,
+						'LocationConstraint' => TEST_AWS_REGION
+					));
+				}
+				else {
+					throw $ex;
+				}
 			}
 
 			// build test objects
@@ -70,7 +74,7 @@
 					$cl->putObject(array(
 						'Bucket' => TEST_READ_BUCKET,
 						'Key'    => $key,
-						'Body'   => EntityBody::factory(':' . $value),
+						'Body'   => ':' . $value,
 					    'Metadata' => array(
 						    'key1' => 'key1value',
 					        'key2' => 'key2value'

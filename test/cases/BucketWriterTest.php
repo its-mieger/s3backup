@@ -1,6 +1,6 @@
 <?php
 
-	use Aws\S3\Exception\NoSuchBucketException;
+	use Aws\S3\Exception\S3Exception;
 	use Aws\S3\S3Client;
 	use S3Backup\S3Object;
 	use S3Backup\Writer\BucketWriter;
@@ -29,11 +29,16 @@
 				// test if bucket exists
 				$cl->headBucket(array('Bucket' => TEST_WRITE_BUCKET));
 			}
-			catch (NoSuchBucketException $ex) {
-				$cl->createBucket(array(
-					'Bucket'             => TEST_WRITE_BUCKET,
-					'LocationConstraint' => TEST_AWS_REGION
-				));
+			catch (S3Exception $ex) {
+				if ($ex->getAwsErrorCode() == 'NoSuchBucket') {
+					$cl->createBucket(array(
+						'Bucket'             => TEST_WRITE_BUCKET,
+						'LocationConstraint' => TEST_AWS_REGION
+					));
+				}
+				else {
+					throw $ex;
+				}
 			}
 
 
@@ -51,7 +56,9 @@
 
 				$cl->deleteObjects(array(
 					'Bucket'  => TEST_WRITE_BUCKET,
-					'Objects' => $obj
+					'Delete' => [
+						'Objects' => $obj,
+			        ]
 				));
 			}
 
@@ -136,7 +143,8 @@
 			// check first object
 			$r1Object = $cl->getObject(array(
 				'Bucket' => TEST_WRITE_BUCKET,
-				'Key'    => $obj1->getKey()
+				'Key'    => $obj1->getKey(),
+				'@http'  => ['decode_content' => false], // prevent guzzle from decoding object, since we want to receive the original data
 			));
 			$r1Acl = $cl->getObjectAcl(array(
 				'Bucket' => TEST_WRITE_BUCKET,
@@ -158,11 +166,12 @@
 			// check second object
 			$r2Object = $cl->getObject(array(
 				'Bucket' => TEST_WRITE_BUCKET,
-				'Key'    => $obj2->getKey()
+				'Key'    => $obj2->getKey(),
+				'@http'  => ['decode_content' => false], // prevent guzzle from decoding object, since we want to receive the original data
 			));
 			$r2Acl    = $cl->getObjectAcl(array(
 				'Bucket' => TEST_WRITE_BUCKET,
-				'Key'    => $obj2->getKey()
+				'Key'    => $obj2->getKey(),
 			));
 			$this->assertEquals(fread($obj2->getStream(), 1024), (string)$r2Object['Body']);
 			$this->assertEquals($obj2->getOwner(), $r2Acl['Owner']);
@@ -171,11 +180,12 @@
 			// check third object
 			$r3Object = $cl->getObject(array(
 				'Bucket' => TEST_WRITE_BUCKET,
-				'Key'    => $obj3->getKey()
+				'Key'    => $obj3->getKey(),
+				'@http'  => ['decode_content' => false], // prevent guzzle from decoding object, since we want to receive the original data
 			));
 			$r3Acl    = $cl->getObjectAcl(array(
 				'Bucket' => TEST_WRITE_BUCKET,
-				'Key'    => $obj3->getKey()
+				'Key'    => $obj3->getKey(),
 			));
 			$this->assertEquals(fread($obj3->getStream(), 1024), (string)$r3Object['Body']);
 			$this->assertEquals($obj3->getOwner(), $r3Acl['Owner']);
