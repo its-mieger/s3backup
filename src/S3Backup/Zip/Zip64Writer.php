@@ -1,6 +1,7 @@
 <?php
 
 	namespace S3Backup\Zip;
+	use GMP;
 	use S3Backup\Zip\Exception\ZipBeginFileException;
 	use S3Backup\Zip\Exception\ZipNotStreamingException;
 	use S3Backup\Zip\Exception\ZipWriteException;
@@ -252,7 +253,7 @@
 		 */
 		protected function int64Split($value) {
 			// gmp
-			if (is_resource($value)) {
+			if (is_resource($value) || $value instanceof GMP) {
 				$hex = str_pad(gmp_strval($value, 16), 16, '0', STR_PAD_LEFT);
 
 				$low  = $this->gmpConvert(substr($hex, 0, 8), 16, 10);
@@ -280,9 +281,6 @@
 		 */
 		protected function gmpConvert($num, $base_a, $base_b) {
 			$gmp_num = gmp_init($num, $base_a);
-
-			if (!$gmp_num)
-				throw new \Exception("gmp_convert could not convert [$num] from base [$base_a] to base [$base_b]");
 
 			return gmp_strval($gmp_num, $base_b);
 		}
@@ -365,11 +363,12 @@
 		 * @return string binary packed data returned from pack()
 		 */
 		protected function packFields($fields) {
-			list ($fmt, $args) = array('', array());
+			$fmt  = '';
+			$args = array();
 
 			// populate format string and argument list
 			foreach ($fields as $field) {
-				$fmt .= $field[0];
+				$fmt    .= $field[0];
 				$args[] = $field[1];
 			}
 
